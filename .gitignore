@@ -70,3 +70,4 @@ Temporary Items
 .apdisk
 
 # End of https://www.toptal.com/developers/gitignore/api/haskell,linux,osx
+examples/*/input
