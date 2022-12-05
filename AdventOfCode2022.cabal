@@ -82,12 +82,28 @@ library problems
     import: shared-properties
     build-depends:
         AdventOfCode2022:lib,
-        split
+        AdventOfCode2022:helpers,
+        split,
+        containers,
     exposed-modules:
         DayOne.PartOne
         DayOne.PartTwo
+        DayTwo.PartOne
+        DayTwo.PartTwo
+        DayThree.PartOne
+        DayThree.PartTwo
     hs-source-dirs: problems
 
+library helpers
+    import: shared-properties
+    build-depends:
+        AdventOfCode2022:lib,
+        ghc,
+    exposed-modules:
+        Helpers.Parsing
+        Helpers.Solution
+        Helpers.Input
+    hs-source-dirs: helpers
 
 executable AdventOfCode2022
     -- Import common warning flags.
