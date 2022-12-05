@@ -92,6 +92,49 @@ library problems
         DayTwo.PartTwo
         DayThree.PartOne
         DayThree.PartTwo
+        DayFour.PartOne
+        DayFour.PartTwo
+        DayFive.PartOne
+        DayFive.PartTwo
+        DaySix.PartOne
+        DaySix.PartTwo
+        DaySeven.PartOne
+        DaySeven.PartTwo
+        DayEight.PartOne
+        DayEight.PartTwo
+        DayNine.PartOne
+        DayNine.PartTwo
+        DayTen.PartOne
+        DayTen.PartTwo
+        DayEleven.PartOne
+        DayEleven.PartTwo
+        DayTwelve.PartOne
+        DayTwelve.PartTwo
+        DayThirteen.PartOne
+        DayThirteen.PartTwo
+        DayFourteen.PartOne
+        DayFourteen.PartTwo
+        DayFifteen.PartOne
+        DayFifteen.PartTwo
+        DaySixteen.PartOne
+        DaySixteen.PartTwo
+        DaySeventeen.PartOne
+        DaySeventeen.PartTwo
+        DayEighteen.PartOne
+        DayEighteen.PartTwo
+        DayNineteen.PartOne
+        DayNineteen.PartTwo
+        DayTwenty.PartOne
+        DayTwenty.PartTwo
+        DayTwentyOne.PartOne
+        DayTwentyOne.PartTwo
+        DayTwentyTwo.PartOne
+        DayTwentyTwo.PartTwo
+        DayTwentyThree.PartOne
+        DayTwentyThree.PartTwo
+        DayTwentyFour.PartOne
+        DayTwentyFour.PartTwo
+        DayTwentyFive.PartOne
     hs-source-dirs: problems
 
 library helpers
