@@ -1,4 +1,8 @@
-module DayTwo.PartOne where
+{-|
+module: DayTwo.PartOne 
+description: Advent of Code 2022 Day Two, Part One 
+-}
+module DayTwo.PartOne(solution) where
 
 import Lib.Solution
 import Lib.Types
@@ -62,6 +66,6 @@ defaultDecoder = Map.fromList [(X, Rock), (Y, Paper), (Z, Scissors)]
 score :: [Round] -> Either String Int
 score = fmap (foldr (+) 0) . sequence . map (scoreRound defaultDecoder)
 
-
+-- | Solution for Day Two, Part One
 solution :: AdventProblem Int
 solution = adventOfCode tests (lineByLineM parseRound) score

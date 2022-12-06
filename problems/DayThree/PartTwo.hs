@@ -1,4 +1,8 @@
-module DayThree.PartTwo where
+{-|
+module: DayThree.PartTwo 
+description: Advent of Code 2022 Day Three, Part Two 
+-}
+module DayThree.PartTwo(solution) where
 
 import Helpers.Input
 import Lib.Solution
@@ -43,5 +47,6 @@ score item
 sumM :: (Monad m, Foldable f, Num a) => f (m a) -> m a
 sumM = foldl (liftA2 (+)) (pure 0)
 
+-- | Solution for Day Three, Part Two
 solution :: AdventProblem Int
 solution = adventOfCode examples (lineByLineM lineToPack) badgePriority

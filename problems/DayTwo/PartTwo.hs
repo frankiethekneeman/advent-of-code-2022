@@ -1,9 +1,14 @@
-module DayTwo.PartTwo where
+{-|
+module: DayTwo.PartTwo 
+description: Advent of Code 2022 Day Two, Part Two 
+-}
+module DayTwo.PartTwo(solution) where
 
 import Lib.Solution
 import Lib.Types
 import Control.Monad(join)
 import Helpers.Parsing
+import Helpers.Input(lineByLineM)
 
 tests :: [(String, Int)]
 tests = [("1", 12)]
@@ -68,9 +73,6 @@ score :: [Round] -> Int
 score = foldr (+) 0 . map scoreRound
 
 
--- Move to Helpers.Input
-lineByLine :: Monad m => (String -> m a) -> String -> m [a]
-lineByLine f = sequence . map f . lines
-
+-- | Solution for Day Two, Part Two
 solution :: AdventProblem Int
-solution = adventOfCode tests (lineByLine parseRound) (Right . score)
+solution = adventOfCode tests (lineByLineM parseRound) (Right . score)

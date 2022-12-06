@@ -92,12 +92,13 @@ It's important to note that 'parse' can actually attempt to generate any
 -}
 module Helpers.Parsing (
     -- * Types
-    Grokkable(fromResult),
-    ReadableFromToken(readTok),
-    ScanResult,
-    Scannable(scan),
-    Scanner,
     Token(..),
+    Tokenizable(..),
+    ScanResult,
+    Scanner,
+    Scannable(..),
+    ReadableFromToken(..),
+    Grokkable(..),
     -- * Scanners #scanners#
     -- ** Built In Scanners
     scanChar,
@@ -123,7 +124,7 @@ module Helpers.Parsing (
     parse,
     -- ** Working with ScanResults
     get,
-    grok1,
+    grok,
     grok2,
     grok3,
     grok4,
@@ -137,6 +138,81 @@ import Data.Char (isDigit)
 import Text.Read (readMaybe)
 import GHC.Data.Maybe(firstJusts, orElse)
 import Lib.Types(Result)
+
+{-|
+The result of applying a Scanner to a String.  This acts kind of like a
+list of tokens - with some specific error handling and "rest of computation"
+pieces.
+-}
+data ScanResult = Failure String -- ^ A Failed Scan, with a message about why
+    | Empty -- ^ A successful scan, with no resulting tokens
+    | Remainder String -- ^ The un-scanned portion of a String.
+    | Scanned Token ScanResult  -- ^ A successful scan with a single token, and
+                                -- a recursive scanResult
+    deriving Show
+
+{-|
+This class is used in combinators to convert more succint representations of
+input into working Scanners.
+-}
+class Scannable a where
+    scan :: a -> Scanner
+
+
+-- | create a "Consume" scanner.
+instance Scannable String where
+    scan = consume
+
+-- | Creates a "scanStr"
+instance Scannable (Char -> Bool) where
+    scan = scanStr 
+
+-- | Identity
+instance Scannable Scanner where
+    scan = id
+
+-- | Creates an "end" scanner.
+instance Scannable () where
+    scan = const end
+
+{-|
+A function that takes in a string, and attempts to break it into tokens.
+-}
+type Scanner = String -- ^ Your input
+    -> ScanResult
+
+{- |
+Represents a single token in a ScanResult.  
+-}
+data Token = Ok {-^ A match which stores nothing -}
+    | IntTok Integer -- ^ An Integer
+    | StrTok String -- ^ A String
+    | CharTok Char -- ^ A Single Character
+    | RepTok [ScanResult] -- ^ Every individual result of a repitition.
+    deriving Show
+
+{-|
+This class is used exclusively by "indicatedBy" to inject tokens into
+ScanResults
+-}
+class Tokenizable a where
+    toToken :: a -> Token
+
+-- | Create a String Token
+instance Tokenizable String where
+    toToken = StrTok
+
+-- | Create an Int Token
+instance Tokenizable Integer where
+    toToken = IntTok
+ 
+-- | Create a Reptition Token
+instance Tokenizable [ScanResult] where
+    toToken = RepTok
+
+-- | Create a Char Token
+instance Tokenizable Char where
+    toToken = CharTok
 
 {-|
 Scan for a positive or negative integer.  This is not whitespace tolerant.
@@ -157,15 +233,6 @@ Scan for a single character.
 scanChar :: Scanner
 scanChar "" = Failure "Reached end of String"
 scanChar (c:rest) = Scanned (CharTok c) $ Remainder rest
-
-{-|
-Scan something that _looks_ like a string.  This will either yield a "-" token
-followed by a String containing exclusively digits, or it will yield no token
-at all.  This is intended primarily for internal use - `scanInt` will read these
-tokens into a single Int token.
--}
-intScanner :: Scanner
-intScanner = alternating [sequential [remember "-", scanStr isDigit], scanStr isDigit]
 
 -- ** Parametric Scanners
 
@@ -197,81 +264,6 @@ scanStr :: (Char -> Bool) -> Scanner
 scanStr f haystack = Scanned (StrTok left) (Remainder right)
     where (left, right) = span f haystack
 
-{- |
-Represents a single token in a ScanResult.  
--}
-data Token = Ok {-^ A match which stores nothing -}
-    | IntTok Integer -- ^ An Integer
-    | StrTok String -- ^ A String
-    | CharTok Char -- ^ A Single Character
-    | RepTok [ScanResult] -- ^ Every individual result of a repitition.
-    deriving Show
-
-{-|
-The result of applying a Scanner to a String.  This acts kind of like a
-list of tokens - with some specific error handling and "rest of computation"
-pieces.
--}
-data ScanResult = Failure String -- ^ A Failed Scan, with a message about why
-    | Empty -- ^ A successful scan, with no resulting tokens
-    | Remainder String -- ^ The un-scanned portion of a String.
-    | Scanned Token ScanResult  -- ^ A successful scan with a single token, and
-                                -- a recursive scanResult
-    deriving Show
-
-{-|
-A function that takes in a string, and attempts to break it into tokens.
--}
-type Scanner = String -- ^ Your input
-    -> ScanResult
-
-{-|
-This class is used in combinators to convert more succint representations of
-input into working Scanners.
--}
-class Scannable a where
-    scan :: a -> Scanner
-
-
--- | create a "Consume" scanner.
-instance Scannable String where
-    scan = consume
-
--- | Creates a "scanStr"
-instance Scannable (Char -> Bool) where
-    scan = scanStr 
-
--- | Identity
-instance Scannable Scanner where
-    scan = id
-
--- | Creates an "end" scanner.
-instance Scannable () where
-    scan = const end
-
-{-|
-This class is used exclusively by "indicatedBy" to inject tokens into
-ScanResults
--}
-class Tokenizable a where
-    toToken :: a -> Token
-
--- | Create a String Token
-instance Tokenizable String where
-    toToken = StrTok
-
--- | Create an Int Token
-instance Tokenizable Integer where
-    toToken = IntTok
- 
--- | Create a Reptition Token
-instance Tokenizable [ScanResult] where
-    toToken = RepTok
-
--- | Create a Char Token
-instance Tokenizable Char where
-    toToken = CharTok
-
 -- | Combine two scannables sequentially
 (^&) :: (Scannable a, Scannable b) => a -> b -> Scanner
 l ^& r = sequential [scan l, scan r]
@@ -287,17 +279,35 @@ l ^|  r = alternating [scan l, scan r]
     -> Scanner
 target ^* delimiter  = repeating (scan delimiter) (scan target)
 
+{-|
+Combine a list of scannables sequentially, i.e.: scan the first,
+then the second, then the third, etc.  If one fails, they all fail.
+-}
 sequential :: Scannable a => [a] -> Scanner
 sequential [] s = Remainder s
 sequential [scannable] s = scan scannable s
 sequential (scannable:rest) s = scanRemaining (scan scannable s) $ sequential rest
 
+{-|
+Combine a list of scannables in alternation.  Try each of them from the same
+point in the string, then choose the first successful one.  This alternation
+is not backtrackable
+-}
 alternating :: Scannable a => [a] -> Scanner
 alternating scannables haystack = case success of
         (r:_) -> r
         _ -> Failure "No Successful Alternations"
     where success = filter isSuccessful . map (($ haystack) . scan) $ scannables
 
+{-|
+Repeat a scannable, with a delimiter.  The delimiter must appear between any
+repititions. (If a delimiter is not desired, try consuming an empty string).
+Delimiters are _dropped_, and not available in the final ScanResult.  The
+repeater will happily consume a trailing delimiter.
+
+Repeating scanners create repition tokens, which can only be consumed as
+arrays of a `Grokkable` type.
+-}
 repeating :: (Scannable a, Scannable b) => a -> b -> Scanner
 repeating delimiter target haystack = if isSuccessful firstMatch
         then Scanned (RepTok matches) (Remainder remainder)
@@ -312,57 +322,83 @@ repeating delimiter target haystack = if isSuccessful firstMatch
                 Just (Scanned (RepTok t) (Remainder r)) -> (t, Just r)
                 _ -> ([], Nothing)
 
-collapse :: ScanResult -> Result ScanResult
-collapse (Scanned Ok rest) = collapse rest
-collapse (Scanned (RepTok results) rest) = Scanned <$> rep <*> collapse rest
-    where rep = RepTok <$> mapM collapse results
-collapse (Scanned tok rest) = Scanned tok <$> collapse rest
-collapse other = Right other
-
-indicatedBy :: Tokenizable a => a -> Scanner
+{-|
+Sometimes it's valuable to be able to indicate a match by a token.  In this
+situation, you can inject one directly via this method.
+-}
+indicatedBy :: Tokenizable a
+    => a -- The token you would like to inject.
+    -> Scanner
 indicatedBy tok s = Scanned (toToken tok) $ Remainder s
 
+{-|
+Empty lists are tokenizable, but it requires a very clunky typehint.  This
+convenience function wraps up that typehint for you.
+-}
 indicatedByEmptyList :: Scanner
 indicatedByEmptyList = indicatedBy ([] :: [ScanResult])
 
+{-|
+Assert that the end of the input has been reached, or fail.
+-}
 end :: Scanner
 end "" = Empty
 end s = Failure ("Not at the end: " ++ s)
 
-parse :: Grokkable a => Scanner -> String -> Result a
+{-|
+Use a scanner and an instance of Grokkable to parse a string. Importantly,
+it collapses out unreadable tokens, and makes positional information more
+consistent.
+-}
+parse :: Grokkable a
+    => Scanner -- Your Scanner
+    -> String -- Your Input
+    -> Result a
 parse scanner str = fromResult =<< (collapse $ scanner str)
 
+{-|
+This class allows reading from a token to recover type information.
+-}
 class ReadableFromToken a where
     readTok :: Token -> Result a
 
-class Grokkable a where
-    fromResult :: ScanResult -> Result a
-
-toLeft :: String -> Token -> Result a
-toLeft expected t = Left $ "Expected " ++ expected ++ " but found " ++ actual ++ " instead!"
-    where actual = case t of
-                    (StrTok s) -> "String: " ++ (show s)
-                    (IntTok i) -> "Integer: " ++ (show i)
-                    (CharTok c) -> "Char: " ++ (show c)
-                    Ok -> "Non Capturing Token"
-                    (RepTok _) -> "Repetition"
-
+-- | Read a string from a StrTok
 instance ReadableFromToken String where
     readTok (StrTok s) = Right s
     readTok o = toLeft "String" o
 
+-- | Read an Integer from an IntTok
 instance ReadableFromToken Integer where
     readTok (IntTok i) = Right i
     readTok o = toLeft "Integer" o
 
+-- | Read a Char from a CharTok
 instance ReadableFromToken Char where
     readTok (CharTok c) = Right c
     readTok o = toLeft "Char" o
 
+{-|
+Allow parsing from a ScanResult into an Either String a.  This is
+used inside `parse`.
+-}
+class Grokkable a where
+    fromResult :: ScanResult -> Result a
+
+-- | Any token can be read into a Maybe - failures just become Nothing
+instance ReadableFromToken a => Grokkable (Maybe a) where
+    fromResult t = Right (case get 0 t of
+        Right o -> Just o
+        _ -> Nothing)
+
+-- | All Grokkables can be read out of Repitition tokens as lists.
 instance {-# OVERLAPPABLE #-} Grokkable a => ReadableFromToken [a] where
     readTok (RepTok results) = mapM fromResult results
     readTok o = toLeft "Repitition" o
 
+{-|
+Get the nth token out of a ScanResult.  If the type doesn't match, this
+will return a Left with a message about it.
+-}
 get :: ReadableFromToken a => Int -> ScanResult -> Result a
 get _ (Failure s) = Left $ "Reached a failure: " ++ s
 get _ Empty = Left "Not enough parsed tokens"
@@ -371,12 +407,18 @@ get n (Scanned Ok rest) = get n rest
 get 0 (Scanned t _) = readTok t
 get n (Scanned _ rest) = get (n - 1) rest
 
-grok1 :: ReadableFromToken a
+{-|
+The grok family of functions, like the `liftA` family of functions, allow you to
+fill a function's arguments with results from a Scan and retrieve a Result
+out the other side.
+-}
+grok :: ReadableFromToken a
     => (a -> b)
     -> ScanResult
     -> Result b
-grok1 f r = f <$> get 0 r
+grok f r = f <$> get 0 r
 
+-- | grok for 2 arguments
 grok2 :: ReadableFromToken a
     => ReadableFromToken b
     => (a -> b -> c)
@@ -384,6 +426,7 @@ grok2 :: ReadableFromToken a
     -> Result c
 grok2 f r = f <$> get 0 r <*> get 1 r
 
+-- | grok for 3 arguments
 grok3 :: ReadableFromToken a
     => ReadableFromToken b
     => ReadableFromToken c
@@ -392,6 +435,7 @@ grok3 :: ReadableFromToken a
     -> Result h
 grok3 f r = f <$> get 0 r <*> get 1 r <*> get 2 r 
 
+-- | grok for 4 arguments
 grok4 :: ReadableFromToken a
     => ReadableFromToken b
     => ReadableFromToken c
@@ -401,6 +445,7 @@ grok4 :: ReadableFromToken a
     -> Result h
 grok4 f r = f <$> get 0 r <*> get 1 r <*> get 2 r <*> get 3 r
 
+-- | grok for 5 arguments
 grok5 :: ReadableFromToken a
     => ReadableFromToken b
     => ReadableFromToken c
@@ -411,6 +456,7 @@ grok5 :: ReadableFromToken a
     -> Result h
 grok5 f r = f <$> get 0 r <*> get 1 r <*> get 2 r <*> get 3 r <*> get 4 r
 
+-- | grok for 6 arguments
 grok6 :: ReadableFromToken a
     => ReadableFromToken b
     => ReadableFromToken c
@@ -422,6 +468,7 @@ grok6 :: ReadableFromToken a
     -> Result h
 grok6 f r = f <$> get 0 r <*> get 1 r <*> get 2 r <*> get 3 r <*> get 4 r <*> get 5 r
 
+-- | grok for 7 arguments
 grok7 :: ReadableFromToken a
     => ReadableFromToken b
     => ReadableFromToken c
@@ -438,6 +485,43 @@ grok7 f r = f <$> get 0 r <*> get 1 r <*> get 2 r <*> get 3 r <*> get 4 r <*> ge
 ------------
 -- Utilities:
 -------------
+{-|
+Scan something that _looks_ like a string.  This will either yield a "-" token
+followed by a String containing exclusively digits, or it will yield no token
+at all.  This is intended primarily for internal use - `scanInt` will read these
+tokens into a single Int token.
+-}
+intScanner :: Scanner
+intScanner = alternating [sequential [remember "-", scanStr isDigit], scanStr isDigit]
+
+{-|
+This is an internal utility to eliminate empty tokens and make ScanResults
+more consistently scannable.
+-}
+collapse :: ScanResult -> Result ScanResult
+collapse (Scanned Ok rest) = collapse rest
+collapse (Scanned (RepTok results) rest) = Scanned <$> rep <*> collapse rest
+    where rep = RepTok <$> mapM collapse results
+collapse (Scanned tok rest) = Scanned tok <$> collapse rest
+collapse other = Right other
+
+{-|
+Internal convenience function for turning an unexpected token type into a
+useful message about type mismatch.
+-}
+toLeft :: String -> Token -> Result a
+toLeft expected t = Left $ "Expected " ++ expected ++ " but found " ++ actual ++ " instead!"
+    where actual = case t of
+                    (StrTok s) -> "String: " ++ (show s)
+                    (IntTok i) -> "Integer: " ++ (show i)
+                    (CharTok c) -> "Char: " ++ (show c)
+                    Ok -> "Non Capturing Token"
+                    (RepTok _) -> "Repetition"
+
+{-|
+This internal utility is used for repitition, to retrieve the remaining unscanned
+strings.
+-}
 terminate :: ScanResult -> (ScanResult, Maybe String)
 terminate (Failure s) = (Failure s, Nothing)
 terminate Empty = (Empty, Nothing)
@@ -445,12 +529,19 @@ terminate (Remainder s) = (Empty, Just s)
 terminate (Scanned tok rest) = (Scanned tok rest', remainder)
     where (rest', remainder) = terminate rest
 
+{-|
+This runs a scanner against the unscanned string in a result - failing if
+there is nothing to read.
+-}
 scanRemaining :: ScanResult -> Scanner -> ScanResult
 scanRemaining (Remainder s) scanner = scanner s
 scanRemaining (Scanned tok res) scanner = Scanned tok (scanRemaining res scanner)
 scanRemaining Empty _ = Failure "Nothing left to Scan"
 scanRemaining x _ = x -- Failure, chiefly.
 
+{-|
+Check for any failure tokens in the ScanResult Chain.
+-}
 isSuccessful :: ScanResult -> Bool
 isSuccessful (Scanned _ rest) = isSuccessful rest
 isSuccessful (Failure _) = False

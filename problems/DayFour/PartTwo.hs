@@ -1,9 +1,14 @@
-module DayFour.PartTwo where
+{-|
+module: DayFour.PartTwo 
+description: Advent of Code 2022 Day Four, Part Two 
+-}
+module DayFour.PartTwo(Out, solution) where
 
 import Lib.Solution
 import Helpers.Input
 import Helpers.Parsing
 
+-- | The type of the answer to this problem
 type Out = Int
 
 examples :: [(String, Out)]
@@ -35,6 +40,6 @@ haveOverlap l r = size l + size r > superSize
 countOverlaps :: [(Range, Range)] -> Int
 countOverlaps = length . filter (uncurry haveOverlap)
 
-
+-- | Solution for Day Four, Part Two
 solution:: AdventProblem Out
 solution = adventOfCode examples (lineByLineM parseRangePair) (Right . countOverlaps)
