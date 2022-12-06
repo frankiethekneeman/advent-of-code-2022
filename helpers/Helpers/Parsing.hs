@@ -46,13 +46,13 @@ The next step is to define your 'Scanner'.  See "Scanning" below for how to buil
 a 'Scanner'.  The 'Scanner' for this situation is:
 
 @
-    scanRect = (/=':') ^& ": x=" ^& scanInt ^& ".." ^& scanInt ^& ", y=" ^& scanInt ^& ".." ^& scanInt
+    scanRect = (/=\':\') ^& ": x=" ^& scanInt ^& ".." ^& scanInt ^& ", y=" ^& scanInt ^& ".." ^& scanInt
 @
 
 but for Brevity and readability's sake we might want to do something like this:
 
 @
-    scanRect = (/=':') ^& ": x=" ^& range ^& ", y=" ^& range
+    scanRect = (/=\':\') ^& ": x=" ^& range ^& ", y=" ^& range
         where range = scanInt ^& ".." ^& scanInt
 @
     
@@ -74,7 +74,7 @@ function with the right number of expected parameters to define it:
         toResult = grok5 NamedRectangle
 @
 
-Note - if your function returns a Result, then use compose 'join' with 'grok'
+Note - if your function returns a Result, then use compose 'Control.Monad.join' with 'grok'
 to collapse the Results.
 
 === Pass your 'Scanner' into parse
@@ -88,6 +88,71 @@ your 'Scanner' to produce a function that can parse your input into your target 
 
 It's important to note that 'parse' can actually attempt to generate any
 'Grokkable' type, so it will need a type hint to create the right type.
+
+== Scanning
+
+Scanners greedily consume from a string, and then yield a ScanResult which may 
+contain one or more tokens, and may contain an unscanned "remainder".  It's thus
+best to think of scanners in terms of exactly what they will consume and produce.
+
+=== Basic Scanners
+
+There are several basic scanners buit in - see functions like `scanInt`, `consume`,
+or `remember`.  They consume from the beginning of the string, and typically
+produce a maximum of one token.  For instance, if each line of your input is
+an integer, you can likely get away with `scanInt` as your scanner.
+
+=== Combining Scanners
+There are three major methods of combining your scanners, `sequential`, `alternating`,
+and `repeating`.  Those functions explain their use.  They also have equivalent
+operators to let you write very succint scanners.  For instance, if you want to
+parse a list of elves names and ages, you might use:
+
+@
+    scanElf = (scanStr (/=' ')) ^& (consume " ") ^& scanInt
+@
+
+=== Scannables
+To help you be even more succinct, we've added transformations from several
+common types into Scanners.  A @Char => Bool@ will always be turned into
+a `scanStr` scanner, a @String@ into a `consume` scanner, etc.  This can
+help the above example look like:
+
+@
+    scanElf = (/=' ') ^& " " ^& scanInt
+@
+
+== A Complete Example.
+Imagine an input where you need to parse out Elf basketball teams, listed like this:
+
+@
+The Present Wrappers: Snowball is 60cm, Cocoa is 72cm, Jingle is 59cm, Jurgen is 80cm, Scranthus is 63 cm
+@
+
+The full parse step might look like:
+
+@
+    teamNameScanner = "The " ^& (/=\':\') ^& ": "
+
+    elfScanner = (/=' ') ^& " is " ^& scanInt ^& "cm"
+
+    teamScanner = teamNameScanner ^& (elfScanner ^* ", ")
+
+    data Elf = Elf String Int
+    
+    data Team = Team String [Elf]
+
+    instance Grokkable Elf where
+        toResult = grok2 Elf
+
+    instance Grokkable Team where
+        toResult = grok2 Team
+
+    parseTeam = parse teamScanner
+
+    parseInputToTeams = lineByLineM parseTeam
+@       
+ 
 
 -}
 module Helpers.Parsing (
@@ -157,7 +222,6 @@ input into working Scanners.
 -}
 class Scannable a where
     scan :: a -> Scanner
-
 
 -- | create a "Consume" scanner.
 instance Scannable String where
@@ -408,7 +472,7 @@ get 0 (Scanned t _) = readTok t
 get n (Scanned _ rest) = get (n - 1) rest
 
 {-|
-The grok family of functions, like the `liftA` family of functions, allow you to
+The grok family of functions, like the `Control.Applicative.liftA` family of functions, allow you to
 fill a function's arguments with results from a Scan and retrieve a Result
 out the other side.
 -}

@@ -1,6 +1,6 @@
 {- |
-    Module: Helpers.Solution
-    Description: Helper functions to make the framework do work.
+Module: Helpers.Solution
+Description: Helper functions to make the framework do work.
 -}
 
 module Helpers.Solution where

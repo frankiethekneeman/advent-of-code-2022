@@ -5,6 +5,7 @@ description: Avent of Code 2022 Day TwentyOne, Part Two
 module DayTwentyOne.PartTwo(Out, solution) where
 
 import Lib.Solution
+import Lib.Types
 import Helpers.Solution
 
 -- | The type of the answer to this problem
@@ -15,4 +16,4 @@ examples = []
 
 -- | Solution for Day TwentyOne, Part Two
 solution:: AdventProblem Out
-solution = adventOfCode examples (nyi "Parsing" :: String -> Either String Out) (nyi "Solution")
+solution = adventOfCode examples (nyi "Parsing" :: String -> Result Out) (nyi "Solution")

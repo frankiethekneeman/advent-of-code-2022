@@ -1,3 +1,7 @@
+{-|
+module: Lib.Solution
+description: The Main Functions for bundling up your solutions.
+-}
 module Lib.Solution (
     AdventProblem,
     adventOfCode,
@@ -6,14 +10,22 @@ module Lib.Solution (
 
 import Lib.Types
 import Lib.Processing
-import System.FilePath
+import System.FilePath((</>))
 
+{-|
+A function that takes a base input directory, and runs tests, and
+runs the solution against the actual input, then returns all
+of those.
+-}
 type AdventProblem a = String -> IO ([TestResult], Result a)
 
+{-|
+Generate a standard AdventProblem.
+-}
 adventOfCode :: Answer a => Eq a
-             => [TestCase a]
-             -> Parser b
-             -> Solver b a 
+             => [TestCase a] -- ^ Test cases and expected output
+             -> Parser b -- ^ The Parser for this problem
+             -> Solver b a  -- ^ The solver for this Problem
              -> AdventProblem a
 adventOfCode testCases parse solve baseDir = (,) <$> testResults <*> result
     where testResults = test parse solve resolvedTestCases
@@ -21,11 +33,17 @@ adventOfCode testCases parse solve baseDir = (,) <$> testResults <*> result
           resolvedTestCases = map (\(name, res) -> (dirname </> name, res)) testCases
           dirname = baseDir
 
+{-|
+Generate a configurable AdventProblem.  For instance, often the example runs an
+operation 1, or 5, or 50 times, then expects the actual problem to run the
+iteraiton 10k times.  Using this, we can provide that single configuration
+variable.
+-}
 adventOfCodeConfigurable :: Answer b => Eq b
-                         => [ConfigurableTestCase a b]
-                         -> a
-                         -> Parser c
-                         -> ConfigurableSolver a c b
+                         => [ConfigurableTestCase a b] -- ^ Test Cases and expected output
+                         -> a -- ^ What the configuration input should be for the main
+                         -> Parser c -- ^ The Parser for this problem
+                         -> ConfigurableSolver a c b -- ^ The solver for this problem, with config arg
                          -> AdventProblem b
 adventOfCodeConfigurable testCases arg parse mkSolver baseDir = (,) <$> testResults <*> result
     where testResults = configurableTest parse mkSolver resolvedTestCases

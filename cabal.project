@@ -1,2 +1,3 @@
 packages: AdventOfCode2022.cabal
 haddock-hyperlink-source: True
+haddock-all: True

@@ -1,7 +1,17 @@
-module Lib.Out where
+{-|
+module: Lib.Out
+description: Printing the results of AoC attempts.
+-}
+module Lib.Out(display) where
 
 import Lib.Types
+import System.FilePath(takeFileName)
 
+{-|
+This takes an array of TestResults, and a final Result and prints them.
+Notably, it does not print any attempt if any of the tests fail, allowing
+us to skip long running problems if there's clearly an error.
+-}
 display :: Answer a => [TestResult] -> Result a -> IO ()
 display tests result = testOutput >> putStrLn testGuard
     where testOutput = mapM_ (putStrLn . showResult) tests :: IO ()
@@ -10,12 +20,13 @@ display tests result = testOutput >> putStrLn testGuard
             Left msg -> "There was an error on the main input: " ++ msg
             Right out -> toString out
 
+-- | Pretty print a TestResult
 showResult :: TestResult -> String
-showResult (name, Nothing) = "Test " ++ name ++ " passed."
-showResult (name, Just msg) = "Test " ++ name ++ " failed: " ++ msg
+showResult (name, Nothing) = "Test " ++ (takeFileName name) ++ " passed."
+showResult (name, Just msg) = "Test " ++ (takeFileName name) ++ " failed: " ++ msg
 
+-- | Check if the tests are all passing (i.e. - returned Nothing)
 passing :: [TestResult] -> Bool
 passing = foldr (&&) True . map ( pass . snd)
     where pass (Just _) = False
           pass Nothing = True
-
