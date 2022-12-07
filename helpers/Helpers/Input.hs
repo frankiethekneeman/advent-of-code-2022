@@ -31,3 +31,9 @@ lineByLineM :: Monad m
     -> String
     -> m [a]
 lineByLineM f = sequence . lineByLine f
+
+{-|
+Strip the newlines from an input.  Very useful if input is a single line.
+-}
+stripNewLines :: String -> String
+stripNewLines = filter (/='\n')
