@@ -20,7 +20,7 @@ findStartMarker :: Int -> String -> Result Int
 findStartMarker _ "" = Left "Reached end of String"
 findStartMarker n s
     | Set.size marker == n = Right n
-    | otherwise = (+1) <$> findStartMarker 4 s'
+    | otherwise = (+1) <$> findStartMarker n s'
     where marker = Set.fromList $ take n s
           s' = safeTail s
 
