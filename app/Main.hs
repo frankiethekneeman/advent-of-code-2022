@@ -121,9 +121,11 @@ getProblem "24" "2" = doDisplay . DayTwentyFour.PartTwo.solution
 getProblem "25" "1" = doDisplay . DayTwentyFive.PartOne.solution
 getProblem "25" "2" = const $ foldl (>>) msg solutions
     where msg = putStrLn "Running all solutions..."
-          solutions = map runWithHeaderAndBreak . map (map show) $ problems
-          runWithHeaderAndBreak xs = putStrLn (show xs) >> runAoC xs >> putStrLn ""
-          problems = [[day, part] | day <- [1..24], part <-[1..2]] ++ [[25, 1]] :: [[Int]]
+          solutions = map runWithHeaderAndBreak problems
+          runWithHeaderAndBreak xs = putStrLn (mkHeader xs) >> runAoC (toList xs) >> putStrLn ""
+          problems = [(show day, show part) | day <- [1..24] :: [Int], part <-[1..2]:: [Int]] ++ [("25", "1")]
+          mkHeader (day, part) = "Day " ++ day ++ ", Part " ++ part
+          toList (l,r) = [l, r]
           
 getProblem day part = const . putStrLn $ "No problem for " ++ show (day,part)
 
