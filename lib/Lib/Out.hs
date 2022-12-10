@@ -22,11 +22,11 @@ display tests result = testOutput >> putStrLn testGuard
 
 -- | Pretty print a TestResult
 showResult :: TestResult -> String
-showResult (name, Nothing) = "Test " ++ (takeFileName name) ++ " passed."
-showResult (name, Just msg) = "Test " ++ (takeFileName name) ++ " failed: " ++ msg
+showResult (name, Nothing) = "Test " ++ takeFileName name ++ " passed."
+showResult (name, Just msg) = "Test " ++ takeFileName name ++ " failed: " ++ msg
 
 -- | Check if the tests are all passing (i.e. - returned Nothing)
 passing :: [TestResult] -> Bool
-passing = foldr (&&) True . map ( pass . snd)
+passing = foldr ((&&) . ( pass . snd)) True
     where pass (Just _) = False
           pass Nothing = True

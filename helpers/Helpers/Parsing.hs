@@ -229,7 +229,7 @@ instance Scannable String where
 
 -- | Creates a "scanStr"
 instance Scannable (Char -> Bool) where
-    scan = scanStr 
+    scan = scanStr
 
 -- | Identity
 instance Scannable Scanner where
@@ -269,7 +269,7 @@ instance Tokenizable String where
 -- | Create an Int Token
 instance Tokenizable Integer where
     toToken = IntTok
- 
+
 -- | Create a Reptition Token
 instance Tokenizable [ScanResult] where
     toToken = RepTok
@@ -418,7 +418,7 @@ parse :: Grokkable a
     => Scanner -- Your Scanner
     -> String -- Your Input
     -> Result a
-parse scanner str = fromResult =<< (collapse $ scanner str)
+parse scanner str = fromResult =<< collapse (scanner str)
 
 {-|
 This class allows reading from a token to recover type information.
@@ -497,7 +497,7 @@ grok3 :: ReadableFromToken a
     => (a -> b -> c  -> h)
     -> ScanResult
     -> Result h
-grok3 f r = f <$> get 0 r <*> get 1 r <*> get 2 r 
+grok3 f r = f <$> get 0 r <*> get 1 r <*> get 2 r
 
 -- | grok for 4 arguments
 grok4 :: ReadableFromToken a
@@ -576,9 +576,9 @@ useful message about type mismatch.
 toLeft :: String -> Token -> Result a
 toLeft expected t = Left $ "Expected " ++ expected ++ " but found " ++ actual ++ " instead!"
     where actual = case t of
-                    (StrTok s) -> "String: " ++ (show s)
-                    (IntTok i) -> "Integer: " ++ (show i)
-                    (CharTok c) -> "Char: " ++ (show c)
+                    (StrTok s) -> "String: " ++ show s
+                    (IntTok i) -> "Integer: " ++ show i
+                    (CharTok c) -> "Char: " ++ show c
                     Ok -> "Non Capturing Token"
                     (RepTok _) -> "Repetition"
 

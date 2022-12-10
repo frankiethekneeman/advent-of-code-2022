@@ -27,13 +27,13 @@ check expected parse solve input = toResult $ process parse solve input
           toResult (Right actual)
             | actual == expected = Nothing
             | otherwise = Just msg
-                where msg = "Expected " ++ (toString expected) ++ ", but got " ++ (toString actual)
+                where msg = "Expected " ++ toString expected ++ ", but got " ++ toString actual
 
 {-|
 Read a file and pass it into a function, recovering the output.
 -}
 readAndApply :: String -> (String -> a) -> IO a
-readAndApply fname = (<$> (readFile fname))
+readAndApply fname = (<$> readFile fname)
 
 {-|
 Run a regular test case and return the result.
@@ -43,18 +43,18 @@ test :: Answer b => Eq b
      -> Solver a b
      -> [TestCase b]
      -> IO [TestResult]
-test parse solve = sequence . map exec
+test parse solve = mapM exec
     where exec (name, expected) = (name,) <$> result
             where result = readAndApply name $ check expected parse solve
 
 {-|
 Run a configurable test case and return the result
 -}
-configurableTest :: Answer c => Eq c 
+configurableTest :: Answer c => Eq c
                  => Parser a
                  -> ConfigurableSolver b a c
                  -> [ConfigurableTestCase b c]
                  -> IO [TestResult]
-configurableTest parse mkSolver = sequence . map exec
+configurableTest parse mkSolver = mapM exec
     where exec (name, arg, expected) = (name,) <$> result
             where result = readAndApply name $ check expected parse $ mkSolver arg

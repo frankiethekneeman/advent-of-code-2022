@@ -17,7 +17,7 @@ examples :: [(String, Out)]
 examples = [("1", 21)]
 
 parseHeights :: String -> Result [Int]
-parseHeights = sequence . map (toHeight . readMaybe . pure)
+parseHeights = mapM (toHeight . readMaybe . pure)
     where toHeight Nothing = Left "Not a digit"
           toHeight (Just x) = Right x
 
@@ -36,7 +36,7 @@ countVisible :: [[Int]] -> Int
 countVisible trees = sum . map (length . filter id) $ visibleTrees
     where visibleTrees = zipWith (zipWith (>)) trees visMap
           visMap = getVisibilityMap trees
-    
+
 
 -- | Solution for Day Eight, Part One
 solution:: AdventProblem Out

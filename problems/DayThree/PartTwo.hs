@@ -20,7 +20,7 @@ halve xs = if even l
     then Right $ splitAt (l `div` 2) xs
     else Left "Cannot halve an uneven list"
     where l = length xs
- 
+
 lineToPack :: String -> Either String Pack
 lineToPack = uncurry Pack <.> halve
 

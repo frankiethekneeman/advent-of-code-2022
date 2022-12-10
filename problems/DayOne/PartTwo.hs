@@ -13,7 +13,7 @@ tests = [("1", 45000)]
 
 parser :: String -> [[Int]]
 parser input = map (map read) inventories
-    where inventories = map (lines) elves
+    where inventories = map lines elves
           elves = splitOn "\n\n" input
 
 solver :: [[Int]] -> Int

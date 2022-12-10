@@ -36,7 +36,7 @@ parseMe 'Z' = Right Z
 parseMe x = Left $ "Unrecognized own play: " ++ [x]
 
 parseRound :: String -> Result Round
-parseRound = parse pattern 
+parseRound = parse pattern
     where pattern = scanChar ^& " " ^& scanChar
 
 scoreShape :: RPS -> Int
@@ -55,7 +55,7 @@ toLose = toBeat . toBeat
 scoreMatchup :: RPS -> RPS -> Int
 scoreMatchup other self
     | other == self = 3
-    | self == toBeat other = 6 
+    | self == toBeat other = 6
     | otherwise = 0
 
 toPlay :: EncodedPlay -> RPS -> RPS
@@ -68,7 +68,7 @@ scoreRound (Round other encoded) = shapeScore + matchupScore
     where shapeScore = scoreShape self
           matchupScore = scoreMatchup other self
           self = toPlay encoded other
- 
+
 score :: [Round] -> Int
 score = foldr (+) 0 . map scoreRound
 

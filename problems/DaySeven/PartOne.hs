@@ -19,7 +19,7 @@ type Out = Integer
 data File = Dir (Map.Map String File) | Plain Integer deriving Show
 data ResolvedFile = ResolvedDir Integer (Map.Map String ResolvedFile) | ResolvedPlain Integer
 
-add :: [String] -> File -> (Map.Map String File) -> Result File
+add :: [String] -> File -> Map.Map String File -> Result File
 add [] (Dir oldFiles) files = Right . Dir $ Map.union files oldFiles
 add (n:rest) (Dir files) toInsert = Dir <$> Map.alterF update n files
     where update Nothing = Left $ n ++ " not found"
@@ -45,13 +45,13 @@ parseCommand (ctx, fs) [cmd] = case stripPrefix "cd " cmd of
 parseCommand (ctx, fs) (cmd:out) = if cmd == "ls"
         then (ctx,) <$> (add ctx fs =<< fileMap)
         else Left $ "Unrecognized Command with output: " ++ cmd
-    where fileMap = Map.fromList <$> (sequence . map parseFile $ out)
-parseCommand _ [] = Left $ "Cannot Parse empty Command"
+    where fileMap = Map.fromList <$> mapM parseFile out
+parseCommand _ [] = Left "Cannot Parse empty Command"
 
 parseFile :: String -> Result (String, File)
 parseFile line = case stripPrefix "dir " line of
     (Just n) -> Right (n, Dir Map.empty)
-    Nothing -> (safeTail fname,) <$> Plain <$> size
+    Nothing -> (safeTail fname,) . Plain <$> size
         where size = readEither sizeStr
               (sizeStr, fname) = span (/=' ') line
 
@@ -62,7 +62,7 @@ parseSession = fmap (resolve . snd) . parse . split
 
 tree :: ResolvedFile -> [ResolvedFile]
 tree f@(ResolvedPlain _) = [f]
-tree f@(ResolvedDir _ entries) = [f] ++ (tree =<< Map.elems entries)
+tree f@(ResolvedDir _ entries) = f : (tree =<< Map.elems entries)
 
 sumFoldersWithLimit :: Integer -> ResolvedFile -> Integer
 sumFoldersWithLimit n = sum . filter (<=n) . map getSize . filter isDir . tree

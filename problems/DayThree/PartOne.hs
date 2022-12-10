@@ -19,7 +19,7 @@ halve xs = if even l
     then Right $ splitAt (l `div` 2) xs
     else Left "Cannot halve an uneven list"
     where l = length xs
- 
+
 lineToPack :: String -> Either String Pack
 lineToPack = uncurry Pack <.> halve
 
@@ -27,7 +27,7 @@ lineToPack = uncurry Pack <.> halve
 (<.>) f1 f2 arg = f1 <$> f2 arg
 
 mispackedPriority :: [Pack] -> Either String Int
-mispackedPriority = sumM . map score . concat . map Set.elems . map identifyMispacked
+mispackedPriority = sumM . map score . concat . map (Set.elems . identifyMispacked)
 
 identifyMispacked :: Pack -> Set.Set Char
 identifyMispacked (Pack first second) = Set.intersection first' second'

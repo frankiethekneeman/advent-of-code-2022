@@ -11,7 +11,7 @@ import Helpers.Parsing
 import Data.List(transpose,genericSplitAt,uncons)
 import Control.Applicative(liftA)
 import Control.Monad(foldM)
-import Data.Maybe(catMaybes)
+import Data.Maybe(catMaybes, mapMaybe)
 import Distribution.Simple.Utils(safeInit,safeTail,safeHead)
 import Helpers.Solution(maybeToResult)
 
@@ -31,9 +31,9 @@ instance Grokkable StackLevel where
     fromResult = grok StackLevel
 
 parseStacks :: [String] -> Result Stacks
-parseStacks = deMaybe . transpose' .  sequence . map (liftA unmarshall . parse stackRowScanner)
-    where transpose' = liftA transpose
-          deMaybe = liftA $ map catMaybes
+parseStacks = deMaybe . transpose' .  mapM (fmap unmarshall . parse stackRowScanner)
+    where transpose' = fmap transpose
+          deMaybe = fmap $ map catMaybes
           stackRowScanner = ((empty ^| full) ^* " ") ^& ()
           empty = "   " ^& indicatedByEmptyList
           full = "[" ^& scanChar ^& "]"
@@ -41,9 +41,9 @@ parseStacks = deMaybe . transpose' .  sequence . map (liftA unmarshall . parse s
 data Instruction = Instruction Integer Integer Integer
 
 instance Grokkable Instruction where
-    fromResult = grok3 Instruction 
+    fromResult = grok3 Instruction
 parseInstructions :: [String] -> Result [Instruction]
-parseInstructions = sequence . map (parse insScanner)
+parseInstructions = mapM (parse insScanner)
     where insScanner = "move " ^& scanInt ^& " from " ^& scanInt ^& " to " ^& scanInt ^& ()
 
 parseDockState :: String -> Result (Stacks, [Instruction])
@@ -57,7 +57,7 @@ parseDockState input = (,) <$> stacks <*> instructions
 getStack :: Integer -> Stacks -> Result ([[Char]], [Char], [[Char]])
 getStack n stacks = do
     let (before, rest) = genericSplitAt (n - 1) stacks
-    (target, after) <- maybeToResult ("No stack at position " ++ (show n)) $ uncons rest
+    (target, after) <- maybeToResult ("No stack at position " ++ show n) $ uncons rest
     pure (before, target, after)
 
 pop :: Integer -> Integer -> Stacks -> Result ([Char], Stacks)
@@ -84,7 +84,7 @@ executeInstructions :: Stacks -> [Instruction] -> Result Stacks
 executeInstructions = foldM (flip executeInstruction)
 
 getMessage :: Stacks -> String
-getMessage = catMaybes . map safeHead
+getMessage = mapMaybe safeHead
 
 solve :: Stacks -> [Instruction] -> Result String
 solve s i = getMessage <$> executeInstructions s i

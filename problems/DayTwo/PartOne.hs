@@ -37,7 +37,7 @@ parseMe 'Z' = Right Z
 parseMe x = Left $ "Unrecognized own play: " ++ [x]
 
 parseRound :: String -> Result Round
-parseRound = parse pattern 
+parseRound = parse pattern
     where pattern = scanChar ^& " " ^& scanChar
 
 scoreShape :: RPS -> Int
@@ -59,7 +59,7 @@ scoreRound decoder (Round other encoded) = (+) <$> shapeScore <*> matchupScore
           self = case Map.lookup encoded decoder of
                     (Just s) -> Right s
                     Nothing -> Left $ (show encoded) ++ " not decodable"
- 
+
 defaultDecoder :: Map.Map EncodedPlay RPS
 defaultDecoder = Map.fromList [(X, Rock), (Y, Paper), (Z, Scissors)]
 

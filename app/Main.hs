@@ -126,11 +126,11 @@ getProblem "25" "2" = const $ foldl (>>) msg solutions
           problems = [(show day, show part) | day <- [1..24] :: [Int], part <-[1..2]:: [Int]] ++ [("25", "1")]
           mkHeader (day, part) = "Day " ++ day ++ ", Part " ++ part
           toList (l,r) = [l, r]
-          
+
 getProblem day part = const . putStrLn $ "No problem for " ++ show (day,part)
 
 doDisplay :: Answer a => IO ([TestResult], Result a) -> IO ()
-doDisplay = ((uncurry display) =<<)
+doDisplay = (uncurry display =<<)
 
 getInputDir :: String -> IO String
 getInputDir day = combine <$> basePath <*> pure day
