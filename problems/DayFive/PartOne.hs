@@ -8,7 +8,6 @@ import Lib.Solution
 import Lib.Types
 import Helpers.Parsing
 import Data.List(transpose,genericSplitAt,uncons)
-import Control.Applicative(liftA)
 import Control.Monad(foldM)
 import Data.Maybe(mapMaybe, catMaybes)
 import Distribution.Simple.Utils(safeInit,safeTail,safeHead)

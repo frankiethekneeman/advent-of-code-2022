@@ -51,7 +51,7 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common shared-properties
-    ghc-options: -Wall 
+    ghc-options: -Wall -Werror
     default-extensions:
         UndecidableInstances
         FlexibleInstances
@@ -86,6 +86,8 @@ library problems
         split,
         containers,
         Cabal,
+        yjtools,
+        either,
     exposed-modules:
         DayOne.PartOne
         DayOne.PartTwo

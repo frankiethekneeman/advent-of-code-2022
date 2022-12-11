@@ -16,6 +16,7 @@ type Out = Int
 examples :: [(String, Out)]
 examples = [("1", 21)]
 
+-- | Parse the map of heights
 parseHeights :: String -> Result [Int]
 parseHeights = mapM (toHeight . readMaybe . pure)
     where toHeight Nothing = Left "Not a digit"

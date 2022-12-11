@@ -17,6 +17,11 @@ import Control.Monad(foldM)
 type Out = Integer
 
 data File = Dir (Map.Map String File) | Plain Integer deriving Show
+
+{-|
+Instead of calculating the directory size on the fly, this allows us
+to cache directory size
+-}
 data ResolvedFile = ResolvedDir Integer (Map.Map String ResolvedFile) | ResolvedPlain Integer
 
 add :: [String] -> File -> Map.Map String File -> Result File
@@ -32,6 +37,7 @@ resolve (Dir entries) = ResolvedDir size entries'
     where size = sum $ Map.map getSize entries'
           entries' = Map.map resolve entries
 
+-- | Get the size of a resolved File.
 getSize :: ResolvedFile -> Integer
 getSize (ResolvedPlain size) = size
 getSize (ResolvedDir size _) = size
@@ -55,11 +61,13 @@ parseFile line = case stripPrefix "dir " line of
         where size = readEither sizeStr
               (sizeStr, fname) = span (/=' ') line
 
+-- | Parse the entire shell session as a single string to extract the filesystem.
 parseSession :: String -> Result ResolvedFile
 parseSession = fmap (resolve . snd) . parse . split
     where parse = foldM parseCommand ([], Dir Map.empty) :: [[String]] -> Result ([String], File)
           split = map lines . splitOn "\n$ " . drop 2 :: String -> [[String]]
 
+-- | obtain a flat representation of the filesystem
 tree :: ResolvedFile -> [ResolvedFile]
 tree f@(ResolvedPlain _) = [f]
 tree f@(ResolvedDir _ entries) = f : (tree =<< Map.elems entries)
