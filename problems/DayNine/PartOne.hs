@@ -38,7 +38,7 @@ go (x, y) R = (x + 1, y)
 
 follow :: (Int, Int) -> (Int, Int) ->  (Int, Int)
 follow (hx, hy) (tx, ty) = (tx + dx, ty + dy)
-    where (dx, dy) = case (hx - tx, hy - ty) of 
+    where (dx, dy) = case (hx - tx, hy - ty) of
                 (0, 0) -> (0, 0)
                 (0, n) -> if abs n == 1 then (0, 0) else (0, scaleDown n)
                 (n, 0) -> if abs n == 1 then (0, 0) else (scaleDown n, 0)
@@ -59,4 +59,4 @@ examples = [("1", 13)]
 
 -- | Solution for Day Nine, Part One
 solution:: AdventProblem Out
-solution = adventOfCode examples (parseInstructions) (Right . modelString)
+solution = adventOfCode examples parseInstructions (Right . modelString)

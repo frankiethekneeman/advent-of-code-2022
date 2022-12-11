@@ -44,7 +44,7 @@ runProg cmds = Map.fromDistinctAscList changes
 
 lookupFloor :: Show k => Ord k => Enum k => k -> Map.Map k a -> Result a
 lookupFloor key = maybeToRight errMsg . snd <.> Map.lookupMax . fst . Map.split next
-    where errMsg = "Key too small: " ++ (show key)
+    where errMsg = "Key too small: " ++ show key
           next = succ key
 
 analyzeSignal :: [Integer] -> [Cmd] -> Result Integer
