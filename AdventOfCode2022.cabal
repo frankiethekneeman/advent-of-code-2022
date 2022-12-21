@@ -146,10 +146,15 @@ library helpers
     build-depends:
         AdventOfCode2022:lib,
         ghc,
+        containers,
+        split,
     exposed-modules:
         Helpers.Parsing
         Helpers.Solution
         Helpers.Input
+        Algorithms.AStar
+    other-modules:
+        DataStructures.MinPQueue
     hs-source-dirs: helpers
 
 executable AdventOfCode2022
