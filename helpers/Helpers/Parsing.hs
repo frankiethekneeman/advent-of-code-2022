@@ -441,6 +441,12 @@ instance ReadableFromToken Char where
     readTok (CharTok c) = Right c
     readTok o = toLeft "Char" o
 
+instance (ReadableFromToken a, ReadableFromToken b) => ReadableFromToken (Either a b) where
+    readTok t = fromTrys (readTok t) (readTok t)
+        where fromTrys _ (Right r) = Right . Right $ r
+              fromTrys (Right l) _ = Right . Left $ l
+              fromTrys (Left e) (Left e2) = Left $ "Tried but: " ++ e ++ " or " ++ e2
+
 {-|
 Allow parsing from a ScanResult into an Either String a.  This is
 used inside `parse`.
@@ -449,7 +455,7 @@ class Grokkable a where
     fromResult :: ScanResult -> Result a
 
 -- | Any token can be read into a Maybe - failures just become Nothing
-instance ReadableFromToken a => Grokkable (Maybe a) where
+instance {-# OVERLAPPABLE #-} ReadableFromToken a => Grokkable (Maybe a) where
     fromResult t = Right (case get 0 t of
         Right o -> Just o
         _ -> Nothing)
@@ -458,6 +464,7 @@ instance ReadableFromToken a => Grokkable (Maybe a) where
 instance {-# OVERLAPPABLE #-} Grokkable a => ReadableFromToken [a] where
     readTok (RepTok results) = mapM fromResult results
     readTok o = toLeft "Repitition" o
+
 
 {-|
 Get the nth token out of a ScanResult.  If the type doesn't match, this

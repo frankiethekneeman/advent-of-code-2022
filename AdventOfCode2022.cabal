@@ -88,6 +88,7 @@ library problems
         Cabal,
         yjtools,
         either,
+        ghc,
     exposed-modules:
         DayOne.PartOne
         DayOne.PartTwo

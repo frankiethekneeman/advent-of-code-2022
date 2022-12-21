@@ -13,6 +13,7 @@ import Helpers.Parsing
 -- | The type of the answer to this problem
 type Out = Int
 
+-- | A direction on the grid: up, down, left, or right
 data Dir = U|D|L|R deriving Show
 
 fromChar :: Char -> Result Dir
@@ -27,16 +28,24 @@ instance Grokkable [Dir] where
         where dir = fromChar =<< get 0 r
               len = get 1 r :: Result Integer
 
+-- | Turn the input into a list of directions to go - expanding multiple steps into individual
+-- Directions
 parseInstructions :: String -> Result [Dir]
 parseInstructions input = concat <$> (mapM (parse (scanChar ^& " " ^& scanInt)) . lines) input
 
-go :: (Int, Int) -> Dir -> (Int, Int)
+-- | Translate a point one step on the grid.
+go :: (Int, Int) -- ^ The point to translate
+    -> Dir -- ^ The direction to translate it
+    -> (Int, Int)
 go (x, y) U = (x, y + 1)
 go (x, y) D = (x, y - 1)
 go (x, y) L = (x - 1, y)
 go (x, y) R = (x + 1, y)
 
-follow :: (Int, Int) -> (Int, Int) ->  (Int, Int)
+-- | Implement rope following logic.
+follow :: (Int, Int) -- ^ The location to move towards (Head of the rope)
+    -> (Int, Int) -- ^ The location that is moving (Tail of the rope)
+    ->  (Int, Int)
 follow (hx, hy) (tx, ty) = (tx + dx, ty + dy)
     where (dx, dy) = case (hx - tx, hy - ty) of
                 (0, 0) -> (0, 0)

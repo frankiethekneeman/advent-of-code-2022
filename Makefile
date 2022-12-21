@@ -7,3 +7,8 @@ ALL_INPUTS=$(shell bash -c 'echo examples/{1..25}/input')
 
 .PHONY:
 inputs: $(ALL_INPUTS)
+
+.PHONY:
+all:
+	make inputs || true
+	cabal run AdventOfCode2022 -- 25 2
