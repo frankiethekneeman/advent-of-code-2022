@@ -465,7 +465,6 @@ instance {-# OVERLAPPABLE #-} Grokkable a => ReadableFromToken [a] where
     readTok (RepTok results) = mapM fromResult results
     readTok o = toLeft "Repitition" o
 
-
 {-|
 Get the nth token out of a ScanResult.  If the type doesn't match, this
 will return a Left with a message about it.
