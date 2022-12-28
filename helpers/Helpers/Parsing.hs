@@ -171,6 +171,7 @@ module Helpers.Parsing (
     -- ** Parametric Scanners
     consume,
     remember,
+    chomp,
     scanStr,
     -- ** Indicators and Assertions
     end,
@@ -231,10 +232,13 @@ instance Scannable String where
 instance Scannable (Char -> Bool) where
     scan = scanStr
 
+-- | Scan a string of a specific length
+instance Scannable Int where
+    scan = chomp
+
 -- | Identity
 instance Scannable Scanner where
     scan = id
-
 -- | Creates an "end" scanner.
 instance Scannable () where
     scan = const end
@@ -320,6 +324,14 @@ remember needle haystack
    | needle `isPrefixOf` haystack = Scanned (StrTok needle) $ Remainder $ drop (length needle) haystack
    | otherwise = Failure $ "Could not consume: " ++ needle
 
+{-|
+Take a string of a known length.  This will fail if there are not enough characters.
+-}
+chomp :: Int -> Scanner
+chomp l haystack
+    | length chomped == l = Scanned (StrTok chomped) $ Remainder rest
+    | otherwise = Failure $ "Needed " ++ show l ++ " characters, found " ++ show (length chomped)
+    where (chomped, rest) = splitAt l haystack
 {-|
 Scan a string one character at a time, as long as the function returns true.
 This method is irrevocably greedy.
@@ -453,6 +465,9 @@ used inside `parse`.
 -}
 class Grokkable a where
     fromResult :: ScanResult -> Result a
+
+instance {-# OVERLAPPABLE #-} ReadableFromToken a => Grokkable a where
+    fromResult = get 0
 
 -- | Any token can be read into a Maybe - failures just become Nothing
 instance {-# OVERLAPPABLE #-} ReadableFromToken a => Grokkable (Maybe a) where

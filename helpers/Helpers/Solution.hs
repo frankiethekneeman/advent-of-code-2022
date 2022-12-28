@@ -21,3 +21,11 @@ maybeToResult :: String -> Maybe a -> Result a
 maybeToResult _ (Just x) = Right x
 maybeToResult s Nothing = Left s
 
+{-|
+If your solution cannot return an error, and therefore doesn't use Result,
+use this to lift it into result
+-}
+configurableRight :: (a -> b -> c) -> a -> b -> Result c
+configurableRight = doubleCompose Right
+    where doubleCompose = (.) . (.)
+

@@ -42,7 +42,7 @@ uniformWeights dist neighbors start = snd <$> weightedSearch dist next Set.empty
 -- | AStar where every step may have a different weight.  Returns the lowest weighted path, if one exists.
 weighted :: Ord a
     => DistF a -- ^ Heuristic for distance to the target node
-    -> StepsF a -- ^ Get all steps, with weitght
+    -> StepsF a -- ^ Get all steps, with weight
     -> a -- ^ Starting Node
     -> Maybe (Int, [a])
 weighted dist next start = weightedSearch dist next Set.empty (Path 0 [start], Queue.empty)
