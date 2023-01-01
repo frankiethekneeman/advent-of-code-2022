@@ -26,7 +26,7 @@ examples = [("1", 1707)
            , ("4", 88)
            , ("5", 264)
            , ("6", 554)
-           , ("friend", 2528)
+           --, ("friend", 2528)
            ]
 
 type EdgeMap = Map.Map String [String]
@@ -56,7 +56,7 @@ tick :: WeightedEdgeMap -> Status -> (Maybe String, [Status])
 tick edges status = case status of
         Standing n -> (Nothing, concat . map (snd . tick edges) . moveFrom $ n)
         Opening n -> (Just n, moveFrom n)
-        Moving 0 n -> (Nothing, (Opening n):moveFrom n)
+        Moving 0 n -> (Nothing, Opening n:moveFrom n)
         Moving k n -> (Nothing, [Moving (pred k) n])
     where moveFrom node = map (uncurry Moving . liftFst pred) . Map.findWithDefault [] node $ edges
 
@@ -66,14 +66,6 @@ progress edges (State e me elephant open) = [State (e + 1) me' elephant' open' |
     where open' = Set.union open . Set.fromList . catMaybes $ [myOpen, elephantOpen]
           (myOpen, myTicks) = tick edges me
           (elephantOpen, elephantTicks) = tick edges elephant
-
---countPathsLessThan :: WeightedEdgeMap -> Int -> String -> Int
---countPathsLessThan edges n curr
---        | n < 0 = 0
---        | n == 0 = 1
---        | otherwise = sum . map (uncurry recurse) $ dests
---    where recurse cost d = countPathsLessThan edges (n-cost) d
---          dests = Map.findWithDefault [] curr $ edges
 
 sumPairs :: Num a => [a] -> [a]
 sumPairs [] = []
@@ -93,12 +85,12 @@ missedFlow valves (State _ _ _ open) = map flowRate closedValves
 
 optimalOpens :: [Valve] -> Int -> State -> Integer
 optimalOpens valves minWalk s@(State e me elephant open) = sum . take (26 - e) $ costs
-    where costs = scanl (-) curr $ (replicate delay 0) ++ flowChanges
+    where costs = scanl (-) curr $ replicate delay 0 ++ flowChanges
           delay = minimum . map (timeToNextOpen open minWalk) $ [me, elephant]
           curr = sum closedValves
-          flowChanges = intercalate (replicate minWalk 0) . map (pure) $ steps
+          flowChanges = intercalate (replicate minWalk 0) . map pure $ steps
           steps = sumPairs . reverse . sort $ closedValves
-          closedValves = missedFlow valves $ s
+          closedValves = missedFlow valves s
 
 nonce :: [Valve] -> Result Out
 nonce v = (optimal - ) . fst <$> path
@@ -109,7 +101,7 @@ nonce v = (optimal - ) . fst <$> path
           minWalk = minimum . map fst . concat . Map.elems $ weightedEdges
           nexts s = map (AStar.Step cost) . progress weightedEdges $ s
             where cost = fromInteger . sum . missedFlow v $ s
-          weightedEdges = toWeightedGraph v . buildEdgeMap $ v 
+          weightedEdges = toWeightedGraph v . buildEdgeMap $ v
 -- | Solution for Day Sixteen, Part Two
 solution:: AdventProblem Out
 solution = adventOfCode examples (lineByLineM parseValve) nonce

@@ -32,6 +32,34 @@ lineByLineM :: Monad m
     -> m [a]
 lineByLineM f = sequence . lineByLine f
 
+{- |
+This will break up the input a character at time and run your parser against each
+character.  This is the guaranteed version.  It is possible to compose this with
+`lineByLine` to get a two dimensional list of characters run through your parser:
+
+@
+    lineByLine . charByChar $ someParser
+@
+-}
+charByChar :: (Char -> a) -- ^ A Parser for a single Character
+    -> String
+    -> [a]
+charByChar = map 
+
+{- |
+Monadic version of charByChar.  Like lineByLineM, it gathers all your results
+into a single big one.   Also composable like charByChar:
+
+@
+    lineByLineM . charByCharM $ someParser
+@
+-}
+charByCharM :: Monad m
+    => (Char -> m a) -- ^ A Parser for a single character, which returns a Result
+    -> String
+    -> m [a]
+charByCharM = mapM
+
 {-|
 Strip the newlines from an input.  Very useful if input is a single line.
 -}

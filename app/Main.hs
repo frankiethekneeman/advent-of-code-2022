@@ -70,6 +70,12 @@ runAoC _ = putStrLn "Requires exactly two arguments: Day, then Part"
 
 
 getProblem :: String -> String -> String -> IO()
+getProblem day "both" = const $ foldl (>>) msg solutions
+    where msg = putStrLn $ "Attempting day " ++ day
+          solutions = map runWithHeaderAndBreak problems
+          runWithHeaderAndBreak part = putStrLn (mkHeader part) >> runAoC [day, part] >> putStrLn ""
+          problems = ["1","2"]
+          mkHeader part = "Part " ++ part
 getProblem "1" "1" = doDisplay . DayOne.PartOne.solution
 getProblem "1" "2" = doDisplay . DayOne.PartTwo.solution
 getProblem "2" "1" = doDisplay . DayTwo.PartOne.solution

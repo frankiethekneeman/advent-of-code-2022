@@ -18,23 +18,27 @@ import Helpers.Parsing
 import Helpers.Solution
 import Helpers.Input
 import Data.List(nub)
-import Data.Maybe(catMaybes)
+import Data.Maybe(catMaybes, mapMaybe)
 
 -- | The type of the answer to this problem
 type Out = Integer
+
+-- | A closed range
 type Range = (Integer, Integer)
 
+-- | A sensor.  First two ints are the sensors location (x, y), next two are the beacon's (x, y)
 data Sensor = Sensor Integer Integer Integer Integer
 
 instance Grokkable Sensor where
     fromResult = grok4 Sensor
 
+-- | Parse a sensor from a line of input.
 parseSensor :: String -> Result Sensor
 parseSensor = parse $ "Sensor at " ^& point ^& ": closest beacon is at " ^& point ^& ()
     where point = "x=" ^& scanInt ^& ", y=" ^& scanInt
 
 rangeInRow :: Integer -> Sensor -> Maybe (Integer, Integer)
-rangeInRow row (Sensor sx sy bx by) = if left <= right then Just (left, right) else Nothing 
+rangeInRow row (Sensor sx sy bx by) = if left <= right then Just (left, right) else Nothing
     where left = sx - dist
           right = sx + dist
           dist = range - ydiff
@@ -61,8 +65,9 @@ rangeSize (l, r) = r - l + 1
 getBeacon :: Sensor -> (Integer, Integer)
 getBeacon (Sensor _ _ bx by) = (bx, by)
 
+-- | Calculate the ranges for each sensor in a row.
 visibleInRow :: Integer -> [Sensor] -> [Range]
-visibleInRow row = foldl (flip add) [] . catMaybes . map (rangeInRow row) 
+visibleInRow row = foldl (flip add) [] . mapMaybe (rangeInRow row)
 
 countObscured :: Integer -> [Sensor] -> Out
 countObscured row sensors = inRange - beacons
